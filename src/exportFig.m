@@ -6,7 +6,7 @@ opts = struct('path', 'pwd',...
               'tikz', false,...
               'pdf', true,...
               'png', true,...
-              'size', 'full' ...
+              'size', 'normal-normal' ...
 );
 
 %% Check if the frequency is specified
@@ -22,6 +22,8 @@ elseif ni == 2
         opts_param = struct();
         opts_param.size = fig_size;
     end
+else % 3 arguments
+    opts_param.size = fig_size;
 end
 
 %% Populate opts with input parameters
@@ -31,18 +33,44 @@ if exist('opts_param','var')
     end
 end
 
-%%
-change_size = true;
-if strcmp(opts.size, 'full') % Full figure
-    opts.pos = [20 60 500 400];
-elseif strcmp(opts.size, 'half') % Used for sub figures
-    opts.pos = [20 60 300 300];
-elseif strcmp(opts.size, 'small') % Used for wrap figures
-    opts.pos = [20 60 400 300];
-elseif strcmp(opts.size, 'wide') % Used to display wide figures
-    opts.pos = [20 60 600 400];
+%% Change size of figure
+% width-height
+% first part (width): normal, full, half
+% second part (height): normal, short, tall
+size_strings = strsplit(opts.size, '-');
+if length(size_strings) == 1 % Only specify the width
+    width_string = opts.size{1};
+    height_string = 'normal';
 else
-    change_size = false;
+    width_string = size_strings{1};
+    height_string = size_strings{2};
+end
+opts.pos = [20 60];
+
+if strcmp(width_string, 'normal')
+    opts.pos = [opts.pos, 450];
+elseif strcmp(width_string, 'wide')
+    opts.pos = [opts.pos, 600];
+elseif strcmp(width_string, 'full')
+    opts.pos = [opts.pos, 700];
+elseif strcmp(width_string, 'half')
+    opts.pos = [opts.pos, 300];
+elseif strcmp(width_string, 'third')
+    opts.pos = [opts.pos, 230];
+else
+    opts.pos = [opts.pos, 450];
+end
+
+if strcmp(height_string, 'normal')
+    opts.pos = [opts.pos, 300];
+elseif strcmp(height_string, 'tall')
+    opts.pos = [opts.pos, 500];
+elseif strcmp(height_string, 'short')
+    opts.pos = [opts.pos, 250];
+elseif strcmp(height_string, 'tiny')
+    opts.pos = [opts.pos, 200];
+else
+    opts.pos = [opts.pos, 300];
 end
 
 if strcmp(opts.path, 'pwd')
@@ -51,9 +79,9 @@ end
 
 %%
 set(gcf,'color','w');
-if change_size
-    set(gcf,'pos',opts.pos);
-end
+set(gcf, 'pos', opts.pos);
+
+tightfig;
 
 %%
 if opts.png
