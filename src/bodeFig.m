@@ -1,9 +1,11 @@
 function [] = bodeFig(systems, freqs, opts_param)
-    %% Default values for opts
+%% TODO - Make documentation
+
+%% Default values for opts
     opts = struct(...
         'phase', false, ...
         'ylabel', '' ...
-    );
+        );
 
     %% Check if the frequency is specified
     ni = nargin;
@@ -57,7 +59,7 @@ function [] = bodeFig(systems, freqs, opts_param)
 
     %% Phase
     if opts.phase
-        ax2 = subaxis(n_subplots,1,2);
+        ax2 = subplot(n_subplots,1,2);
         hold on;
         for i = 1:length(systems)
             plot(freqs, mod(180+resp_phase(i, :), 360)-180);
@@ -70,7 +72,7 @@ function [] = bodeFig(systems, freqs, opts_param)
     end
 
     %% Amplitude
-    ax1 = subaxis(n_subplots,1,1);
+    ax1 = subplot(n_subplots,1,1);
     hold on;
     for i = 1:length(systems)
         plot(freqs, resp_mag(i, :));

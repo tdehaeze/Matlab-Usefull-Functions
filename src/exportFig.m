@@ -1,136 +1,116 @@
-function [] = exportFig(file_name, fig_size, opts_param)
+function [filepath] = exportFig(filepath, args)
+% exportFig - Function to save figure in many different formats
+%
+% Syntax: exportFig(filepath, args)
+%
+% Inputs:
+%    - filepath - path to file to export exportation (with or without extension)
+%    - args:
+%       - fig    - Save fig file (default: false)
+%       - pdf    - Save pdf file (default: true)
+%       - eps    - Save eps file (default: false)
+%       - png    - Save png file (default: true)
+%       - svg    - Save svg file (default: false)
+%       - width  -
+%       - height -
 
-%% Default values for opts
-opts = struct('path', 'pwd',...
-              'folder', 'figures',...
-              'tikz', false,...
-              'pdf', true,...
-              'png', true,...
-              'size', 'normal-normal' ...
-);
+arguments
+    filepath
+    args.fig (1,1) logical {mustBeNumericOrLogical}    = false
+    args.pdf (1,1) logical {mustBeNumericOrLogical}    = true
+    args.png (1,1) logical {mustBeNumericOrLogical}    = true
+    args.eps (1,1) logical {mustBeNumericOrLogical}    = false
+    args.svg (1,1) logical {mustBeNumericOrLogical}    = false
+    args.width  = 'normal'
+    args.height = 'normal'
+end
 
-%% Check if the frequency is specified
-ni = nargin;
+filepath_split = strsplit(filepath, '.');
 
-if ni == 1 % No opts_param
-    opts_param = struct();
-elseif ni == 2
-    if isstruct(fig_size) % If the second parameter is the opts_param
-        opts_param = fig_size;
-        clear fig_size;
-    else % If second parameter is the fig_size
-        opts_param = struct();
-        opts_param.size = fig_size;
+if length(filepath_split) > 1
+    filepath = filepath_split{1};
+end
+
+pos = [-10 -10];
+
+if strcmp(args.width, 'normal')
+    pos = [pos, 800];
+elseif strcmp(args.width, 'wide')
+    pos = [pos, 900];
+elseif strcmp(args.width, 'full')
+    pos = [pos, 1200];
+elseif strcmp(args.width, 'half')
+    pos = [pos, 650];
+elseif strcmp(args.width, 'third')
+    pos = [pos, 400];
+elseif isnumeric(args.width)
+    pos = [pos, args.width];
+else
+    pos = [pos, 800];
+end
+
+if strcmp(args.height, 'normal')
+    pos = [pos, 500];
+elseif strcmp(args.height, 'tall')
+    pos = [pos, 800];
+elseif strcmp(args.height, 'full')
+    pos = [pos, 1000];
+elseif strcmp(args.height, 'short')
+    pos = [pos, 400];
+elseif strcmp(args.height, 'tiny')
+    pos = [pos, 300];
+elseif isnumeric(args.height)
+    pos = [pos, args.height];
+else
+    pos = [pos, 500];
+end
+
+f = gcf;
+set(f, 'visible', 'off');
+
+set(f,'pos', pos);
+
+if args.pdf || args.svg
+    exportgraphics(f, sprintf('%s.pdf', filepath), 'BackgroundColor', 'none', 'ContentType', 'vector');
+end
+
+if args.png
+    try
+        system(sprintf('pdftocairo -png -transp -singlefile %s.pdf %s >/dev/null 2>&1', filepath, filepath));
+    catch
+        warning('pdftocario command has failed. Using exportgraphics instead.');
+        exportgraphics(f, sprintf('%s.png', filepath));
     end
-else % 3 arguments
-    opts_param.size = fig_size;
 end
 
-%% Populate opts with input parameters
-if exist('opts_param','var')
-    for opt = fieldnames(opts_param)'
-        opts.(opt{1}) = opts_param.(opt{1});
+if args.eps
+    exportgraphics(f, sprintf('%s.eps', filepath), 'BackgroundColor', 'none');
+end
+
+if args.svg
+    system(sprintf('pdftocairo -svg %s.pdf %s.svg >/dev/null 2>&1', filepath, filepath));
+    if ~args.pdf
+        system(sprintf('rm %s.pdf', filepath));
     end
 end
 
-%% Change size of figure
-% width-height
-% first part (width): normal, full, half
-% second part (height): normal, short, tall
-size_strings = strsplit(opts.size, '-');
-if length(size_strings) == 1 % Only specify the width
-    width_string = opts.size{1};
-    height_string = 'normal';
-else
-    width_string = size_strings{1};
-    height_string = size_strings{2};
-end
-opts.pos = [20 60];
-
-if strcmp(width_string, 'normal')
-    opts.pos = [opts.pos, 450];
-elseif strcmp(width_string, 'wide')
-    opts.pos = [opts.pos, 600];
-elseif strcmp(width_string, 'full')
-    opts.pos = [opts.pos, 700];
-elseif strcmp(width_string, 'half')
-    opts.pos = [opts.pos, 300];
-elseif strcmp(width_string, 'third')
-    opts.pos = [opts.pos, 230];
-else
-    opts.pos = [opts.pos, 450];
+if args.fig
+    saveas(f, filepath, 'fig');
 end
 
-if strcmp(height_string, 'normal')
-    opts.pos = [opts.pos, 300];
-elseif strcmp(height_string, 'tall')
-    opts.pos = [opts.pos, 500];
-elseif strcmp(height_string, 'short')
-    opts.pos = [opts.pos, 250];
-elseif strcmp(height_string, 'tiny')
-    opts.pos = [opts.pos, 200];
-else
-    opts.pos = [opts.pos, 300];
+set(f, 'visible', 'on');
+
+filepath = [filepath, '.png'];
 end
 
-if strcmp(opts.path, 'pwd')
-    opts.path = pwd;
+function mustBeWidth(arg)
+    if any(mustBeMember(arg,{'normal', 'wide', 'full', 'half', 'third'}) || mustBePositive(str2num(arg)))
+        error('Width is wrongly specify')
+    end
 end
 
-%%
-set(gcf,'color','w');
-set(gcf, 'pos', opts.pos);
-
-tightfig;
-
-%%
-if opts.png
-    export_fig(sprintf('%s/%s/%s.png', opts.path, opts.folder, file_name), '-png')
+function mustBeHeight(arg)
+    if any(mustBeMember(arg,{'normal', 'tall', 'full', 'short', 'tiny'}) || mustBePositive(str2num(arg)))
+        error('Height is wrongly specify')
+    end
 end
-
-if opts.pdf
-    export_fig(sprintf('%s/%s/%s.png', opts.path, opts.folder, file_name), '-pdf')
-end
-
-% TODO - change size depending of opts.size
-if opts.tikz
-    cleanfigure;
-    matlab2tikz(sprintf('%s/%s/%s.tex', opts.path, opts.folder, file_name), ...
-        'height', '\fheight', ...
-        'width',  '\fwidth',  ...
-        'showInfo', false);
-
-    str_start = [...
-        "\documentclass[12pt,tikz]{standalone}"; ...
-        ""; ...
-        "\ifstandalone%"; ...
-        "\usepackage{import}"; ...
-        "\import{../../configuration/}{comon_packages.tex}%"; ...
-        "\import{../../configuration/}{variables.tex}%"; ...
-        "\import{../../configuration/}{conftikz.tex}%"; ...
-        "\import{../../configuration/}{custom_config.tex}%"; ...
-        ""; ...
-        "\setlength\fwidth{0.5\columnwidth}"; ...
-        "\setlength\fheight{4cm}"; ...
-        "\fi"; ...
-        ""; ...
-        "\begin{document}"; ...
-    ];
-
-    str_end = [...
-        "\end{document}" ...
-    ];
-
-    str_middle = fileread(sprintf('%s/%s/%s.tex', opts.path, opts.folder, file_name));
-
-    fid = fopen(sprintf('%s/%s/%s.tex', opts.path, opts.folder, file_name), 'wt');
-
-    fprintf(fid, '%s\n', str_start);
-    fprintf(fid, '%s\n', str_middle);
-    fprintf(fid, '%s\n', str_end);
-
-    fclose(fid);
-end
-
-end
-
