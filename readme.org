@@ -1,7 +1,1 @@
-#+TITLE: Set of usefull functions for Matlab
-
-* Requirements
-- The [[https://www.mathworks.com/matlabcentral/fileexchange/3696-subaxis-subplot][subaxis]] command
-- The [[https://www.mathworks.com/matlabcentral/fileexchange/34055-tightfig-hfig-?focused=8854279&tab=function][tightfig]] command
-- [[https://www.mathworks.com/matlabcentral/fileexchange/22022-matlab2tikz-matlab2tikz][Matlab2Tikz]] if you want to export to Tikz
-
+index.org
